@@ -227,6 +227,7 @@ for (let character of alfabeto) {
 // Iniciar el juego y activar el botón "Modo Contrarreloj"
 modoContrarrelojBtn.addEventListener("click", () => {
     iniciarCuentaAtras();
+    modoContrarrelojBtn.setAttribute("disabled", "disabled");
 });
 
 let footer = document.querySelector("footer");
