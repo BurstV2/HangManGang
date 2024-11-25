@@ -81,7 +81,7 @@ h3Elem.textContent = `La categoría es: ${seleccionCategoria.categoria}`;
 h2Elem.textContent = palDisplayArr.join(" ");
 
 let fallos = 0;
-let tiempoRestante = 15;
+let tiempoRestante;
 let intervalo;
 
 // Función para deshabilitar todos los botones al terminar el juego
@@ -110,10 +110,7 @@ function actualizarImagen(fallos) {
 // Función para iniciar la cuenta atrás
 function iniciarCuentaAtras() {
     intervalo = setInterval(() => {
-        const minutos = Math.floor(tiempoRestante / 60);
-        const segundos = tiempoRestante % 60;
-
-        cuentaAtras.textContent = `${minutos}m ${segundos}s`;
+        cuentaAtras.textContent = `${tiempoRestante}s`;
 
         tiempoRestante--;
 
@@ -226,6 +223,9 @@ for (let character of alfabeto) {
 
 // Iniciar el juego y activar el botón "Modo Contrarreloj"
 modoContrarrelojBtn.addEventListener("click", () => {
+    clearInterval(intervalo);
+    tiempoRestante = 15; 
+    cuentaAtras.textContent = `${tiempoRestante}s`;
     iniciarCuentaAtras();
     modoContrarrelojBtn.setAttribute("disabled", "disabled");
 });
