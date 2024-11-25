@@ -7,6 +7,7 @@ let win = new Audio("./sound/win.wav");
 let correct = new Audio("./sound/correct.wav");
 let lose = new Audio("./sound/lose.wav");
 let fail = new Audio("./sound/fail.wav");
+let death = new Audio("./sound/death.wav");
 let soundOn = true;
 //Funcion Sonido
 function playSound(audio) {
@@ -20,9 +21,7 @@ function activateSound() {
     const imagenBoton = document.getElementById("soundIcon");
     imagenBoton.src = soundOn ? "./img/off.png" : "./img/on.png";
     const boton = document.getElementById("soundToggle");
-    boton.style.backgroundColor = soundOn
-        ? "rgb(115, 246, 108)"
-        : "rgb(246, 140, 108)";
+    boton.style.backgroundColor = soundOn ? "#ffffff" : "rgb(246, 140, 108)";
 }
 
 const alfabeto = [
@@ -56,7 +55,10 @@ const alfabeto = [
 ];
 
 let seleccionCategoria = opciones[Math.floor(Math.random() * opciones.length)];
-let objetoSolucion = seleccionCategoria.palabras[Math.floor(Math.random() * seleccionCategoria.palabras.length)];
+let objetoSolucion =
+    seleccionCategoria.palabras[
+        Math.floor(Math.random() * seleccionCategoria.palabras.length)
+    ];
 let palabraElegida = objetoSolucion.palabra;
 let pistaElegida = objetoSolucion.pista;
 let solucionArray = palabraElegida.split("");
@@ -66,51 +68,155 @@ const h2Elem = document.getElementById("h2");
 const h3Elem = document.getElementById("h3");
 const pistaElem = document.getElementById("pista");
 const keys = document.getElementById("keys");
+const cuentaAtras = document.getElementById("cuenta-atras");
+const modoContrarrelojBtn = document.getElementById("modo-contrarreloj");
+const sectionM = document.querySelector(".modal");
+const modalImg = document.querySelector('.modal-container');
+const h2Perder = document.querySelector(".modal-title");
+const pPerder = document.querySelector(".modal-p");
 
-pistaElem.textContent = `Pista: ${pistaElegida}`;
+pistaElem.textContent = `¿Quieres una pista? ¡Hazme click!`;
+pistaElem.addEventListener("click",() => (pistaElem.textContent = `Pista: ${pistaElegida}`));
 h3Elem.textContent = `La categoría es: ${seleccionCategoria.categoria}`;
 h2Elem.textContent = palDisplayArr.join(" ");
 
-
 let fallos = 0;
+let tiempoRestante = 15;
+let intervalo;
 
+// Función para deshabilitar todos los botones al terminar el juego
 function disableAllButtons() {
-    const allButtons = document.getElementsByTagName("button");
+    const allButtons = document.getElementsByClassName("letra");
     for (const thing of allButtons) {
         thing.disabled = true;
     }
 }
+//creamos funcion para remover acentos de las vocales
+function removeAccent(letter) {
+    if (letter === "á") return "a";
+    if (letter === "é") return "e";
+    if (letter === "í") return "i";
+    if (letter === "ó") return "o";
+    if (letter === "ú") return "u";
+    return letter;
+}
 
+// Función para actualizar la imagen del ahorcado
+function actualizarImagen(fallos) {
+    const imgElem = document.getElementById("dibujoAhorcado");
+    imgElem.src = `fotos/ahorcado${fallos}.jpg`;
+}
+
+// Función para iniciar la cuenta atrás
+function iniciarCuentaAtras() {
+    intervalo = setInterval(() => {
+        const minutos = Math.floor(tiempoRestante / 60);
+        const segundos = tiempoRestante % 60;
+
+        cuentaAtras.textContent = `${minutos}m ${segundos}s`;
+
+        tiempoRestante--;
+
+        if (tiempoRestante < 0) {
+            clearInterval(intervalo);
+            modalImg.style.backgroundImage = "url(./img/modalPerder.png)";
+            cuentaAtras.textContent = "¡Tiempo agotado!";
+            h2Perder.textContent = "¡Se acabó el tiempo!";
+            pPerder.textContent = `¡Gracias por jugar en nuestro proyecto del Ahorcado! La palabra correcta era: ${palabraElegida}`;
+            sectionM.classList.add("modal--show");
+            disableAllButtons();
+            actualizarImagen(fallos);
+            playSound(lose);
+        }
+    }, 1000);
+}
+
+//Juego basico
 function charCheck(button, guess) {
-    if (solucionArray.includes(guess)) {
+    if (solucionArray.some((elem) => removeAccent(elem) === guess)) {
         for (let i = 0; i < solucionArray.length; i++) {
-            if (solucionArray[i] === guess) {
-                palDisplayArr[i] = guess;
-                playSound(correct);
+            let elemSinTildes = removeAccent(solucionArray[i]);
+            if (guess === elemSinTildes) {
+                palDisplayArr[i] = solucionArray[i];
             }
         }
         h2Elem.textContent = palDisplayArr.join(" ");
+        playSound(correct);
     } else {
         fallos += 1;
-        //Enseñar fallos por consola, borrar cuando se añada la visibilidad de las partes del ahorcado
-        console.log(`Fallos: ${fallos}`);
         playSound(fail);
+        actualizarImagen(fallos);
     }
+
     button.disabled = true;
     if (palDisplayArr.indexOf("_") === -1) {
-        alert("Ganaste! Presiona F5 para volver a jugar");
         disableAllButtons();
         playSound(win);
+        sectionM.classList.add("modal--show");
     }
     if (fallos >= 6) {
-        alert("Perdiste! Presiona F5 para volver a jugar");
         disableAllButtons();
+        actualizarImagen(fallos);
         playSound(lose);
+        modalImg.style.backgroundImage = "url(./img/modalPerder.png)";
+        h2Perder.textContent = "¡Perdiste!";
+        pPerder.textContent = `¡Gracias por jugar en nuestro proyecto del Ahorcado! La palabra correcta era: ${palabraElegida}`;
+        sectionM.classList.add("modal--show");
     }
 }
 
+//funcion para adivinar palabra completa
+const botonAdivinarPalabra = document.querySelector("#adivinarPalabra");
+botonAdivinarPalabra.addEventListener("click", adivinarPalabraCompleta);
+function remove(text) {
+    const accents = {
+        á: "a",
+        é: "e",
+        í: "i",
+        ó: "o",
+        ú: "u",
+        Á: "A",
+        É: "E",
+        Í: "I",
+        Ó: "O",
+        Ú: "U",
+    };
+    return text
+        .split("")
+        .map((char) => accents[char] || char)
+        .join("");
+}
+function adivinarPalabraCompleta() {
+    const intentoPalabra = prompt(
+        `Introduce tu intento para la palabra completa (todo en minúsculas y usando tildes donde corresponda): ${palDisplayArr.join(
+            " "
+        )}`
+    );
+    if (
+        intentoPalabra &&
+        remove(intentoPalabra.toLowerCase()) ===
+            remove(palabraElegida.toLowerCase())
+    ) {
+        h2Elem.textContent = palabraElegida;
+        playSound(win);
+        disableAllButtons();
+        sectionM.classList.add("modal--show");
+    } else {
+        fallos = 6;
+        actualizarImagen(fallos);
+        disableAllButtons();
+        playSound(death);
+        modalImg.style.backgroundImage = "url(./img/modalPerder.png)";
+        h2Perder.textContent = "¡Perdiste!";
+        pPerder.textContent = `¡Gracias por jugar en nuestro proyecto del Ahorcado! La palabra correcta era: ${palabraElegida}`;
+        sectionM.classList.add("modal--show");
+    }
+}
+
+// Crear botones para cada letra del alfabeto
 for (let character of alfabeto) {
     let button = document.createElement("button");
+    button.classList.add("letras");
     button.innerText = character;
     keys.appendChild(button);
     button.addEventListener("click", (e) => {
@@ -118,13 +224,23 @@ for (let character of alfabeto) {
     });
 }
 
+// Iniciar el juego y activar el botón "Modo Contrarreloj"
+modoContrarrelojBtn.addEventListener("click", () => {
+    iniciarCuentaAtras();
+});
+
+let footer = document.querySelector("footer");
 let botonActivarSonido = document.createElement("button");
 botonActivarSonido.id = "soundToggle";
-botonActivarSonido.style.backgroundColor = "rgb(115, 246, 108)";
+botonActivarSonido.style.backgroundColor = "#ffffff";
 let imagenBoton = document.createElement("img");
 imagenBoton.id = "soundIcon";
 imagenBoton.src = soundOn ? "./img/off.png" : "./img/on.png";
 imagenBoton.alt = "Icono de sonido";
-botonActivarSonido.appendChild(imagenBoton);
+botonActivarSonido.append(imagenBoton);
 botonActivarSonido.addEventListener("click", activateSound);
-document.body.appendChild(botonActivarSonido);
+footer.append(botonActivarSonido);
+
+//Modal
+let botonModal = document.querySelector(".modal-close");
+botonModal.addEventListener("click", () => location.reload());

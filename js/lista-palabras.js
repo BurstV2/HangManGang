@@ -318,7 +318,7 @@ const opciones = [
             },
             {
                 palabra: 'zombie',
-                pista: 'Un Ser reanimado, generalmente representado como una persona sin consciencia, con movimientos torpes y un hambre insaciable',
+                pista: 'Un ser reanimado, generalmente representado como una persona sin consciencia, con movimientos torpes y un hambre insaciable',
             },
             {
                 palabra: 'soldado',
